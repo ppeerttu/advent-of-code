@@ -1,0 +1,260 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 2
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.5.0"},
+  {:nx, "~> 0.1.0"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Input
+
+```elixir
+input = Kino.Input.textarea("Please paste your input:")
+```
+
+```elixir
+rounds =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+  |> Enum.map(&(String.split(&1, " ") |> List.to_tuple()))
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+[
+  {"B", "Z"},
+  {"A", "X"},
+  {"B", "Z"},
+  {"B", "Z"},
+  {"C", "Z"},
+  {"B", "Z"},
+  {"A", "Z"},
+  {"B", "X"},
+  {"C", "Y"},
+  {"C", "Y"},
+  {"A", "X"},
+  {"A", "X"},
+  {"A", "Z"},
+  {"B", "Z"},
+  {"A", "X"},
+  {"A", "Z"},
+  {"B", "X"},
+  {"C", "Y"},
+  {"A", "Y"},
+  {"A", "Y"},
+  {"C", "Y"},
+  {"B", "Y"},
+  {"C", "X"},
+  {"C", "Y"},
+  {"B", "Z"},
+  {"A", "X"},
+  {"A", "Y"},
+  {"B", "Y"},
+  {"A", "X"},
+  {"A", "Z"},
+  {"B", "X"},
+  {"B", "Y"},
+  {"B", "Z"},
+  {"B", "Z"},
+  {"B", "Z"},
+  {"C", "Y"},
+  {"B", "X"},
+  {"A", "X"},
+  {"C", "Y"},
+  {"B", "Z"},
+  {"B", "Z"},
+  {"C", "X"},
+  {"A", "Z"},
+  {"B", "Z"},
+  {"B", "Z"},
+  {"C", "X"},
+  {"C", "X"},
+  {"B", "X"},
+  {"B", ...},
+  {...},
+  ...
+]
+```
+
+## Part 1
+
+```elixir
+defmodule RPSGame do
+  @rock "rock"
+  @paper "paper"
+  @scissors "scissors"
+
+  @win "win"
+  @loss "loss"
+  @draw "draw"
+
+  def play(rounds, score \\ 0)
+  def play([], score), do: score
+
+  def play([head | tail], score) do
+    normalized_moves = normalize_moves(head)
+    play(tail, score + round_score(normalized_moves))
+  end
+
+  defp round_score({opponent_move, move}) do
+    move_to_points(move) + (round_result(opponent_move, move) |> result_to_points())
+  end
+
+  defp normalize_moves({opponent_move, move}) do
+    {normalize_move(opponent_move), normalize_move(move)}
+  end
+
+  defp normalize_move(move) do
+    case move do
+      "X" -> @rock
+      "A" -> @rock
+      "Y" -> @paper
+      "B" -> @paper
+      "Z" -> @scissors
+      "C" -> @scissors
+      _ -> raise "Unexpected move: " <> move
+    end
+  end
+
+  defp move_to_points(move) do
+    case move do
+      @rock -> 1
+      @paper -> 2
+      @scissors -> 3
+      _ -> raise "Unexpected move: " <> move
+    end
+  end
+
+  defp round_result(opponent_move, move) do
+    case {opponent_move, move} do
+      {@rock, @paper} -> @win
+      {@rock, @scissors} -> @loss
+      {@paper, @rock} -> @loss
+      {@paper, @scissors} -> @win
+      {@scissors, @rock} -> @win
+      {@scissors, @paper} -> @loss
+      _ -> @draw
+    end
+  end
+
+  defp result_to_points(result) do
+    case result do
+      @win -> 6
+      @loss -> 0
+      @draw -> 3
+      _ -> raise "Unexpected result: " <> result
+    end
+  end
+end
+
+RPSGame.play(rounds)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+11449
+```
+
+## Part 2
+
+```elixir
+defmodule RPSGame2 do
+  @rock "rock"
+  @paper "paper"
+  @scissors "scissors"
+
+  @win "win"
+  @loss "loss"
+  @draw "draw"
+
+  def play(rounds, score \\ 0)
+  def play([], score), do: score
+
+  def play([head | tail], score) do
+    round_score =
+      head
+      |> normalize_round_input()
+      |> compute_round_score()
+
+    play(tail, round_score + score)
+  end
+
+  defp normalize_round_input({opponent_move, wanted_round_result}) do
+    {normalize_move(opponent_move), normalize_round_result(wanted_round_result)}
+  end
+
+  defp compute_round_score({opponent_move, wanted_round_result}) do
+    move = get_required_move(opponent_move, wanted_round_result)
+    move_to_points(move) + result_to_points(wanted_round_result)
+  end
+
+  defp normalize_move(move) do
+    case move do
+      "A" -> @rock
+      "B" -> @paper
+      "C" -> @scissors
+      _ -> raise "Unexpected move: " <> move
+    end
+  end
+
+  defp move_to_points(move) do
+    case move do
+      @rock -> 1
+      @paper -> 2
+      @scissors -> 3
+      _ -> raise "Unexpected move: " <> move
+    end
+  end
+
+  defp normalize_round_result(round_result) do
+    case round_result do
+      "X" -> @loss
+      "Y" -> @draw
+      "Z" -> @win
+      _ -> raise "Unexpected round_result: " <> round_result
+    end
+  end
+
+  defp get_required_move(opponent_move, wanted_round_result) do
+    case {opponent_move, wanted_round_result} do
+      {@rock, @win} -> @paper
+      {@rock, @loss} -> @scissors
+      {@paper, @win} -> @scissors
+      {@paper, @loss} -> @rock
+      {@scissors, @win} -> @rock
+      {@scissors, @loss} -> @paper
+      {move, @draw} -> move
+      _ -> raise "Unexpected combination: #{opponent_move}, #{wanted_round_result}"
+    end
+  end
+
+  defp result_to_points(result) do
+    case result do
+      @win -> 6
+      @loss -> 0
+      @draw -> 3
+      _ -> raise "Unexpected result: " <> result
+    end
+  end
+end
+
+RPSGame2.play(rounds)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+13187
+```

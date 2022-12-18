@@ -1,0 +1,84 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 1
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.8.0"},
+  {:nx, "~> 0.4.1"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+Resolving Hex dependencies...
+Resolution completed in 0.137s
+New:
+  complex 0.4.2
+  kino 0.8.0
+  nx 0.4.1
+  table 0.1.2
+* Getting kino (Hex package)
+* Getting nx (Hex package)
+* Getting complex (Hex package)
+* Getting table (Hex package)
+==> table
+Compiling 5 files (.ex)
+Generated table app
+==> complex
+Compiling 2 files (.ex)
+Generated complex app
+==> nx
+Compiling 29 files (.ex)
+Generated nx app
+==> kino
+Compiling 37 files (.ex)
+Generated kino app
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Input
+
+```elixir
+input = Kino.Input.textarea("Please paste your text input:")
+```
+
+## Part 1
+
+```elixir
+sorted =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n\n", trim: true)
+  |> Enum.map(&String.split(&1, "\n", trim: true))
+  |> Enum.map(&Enum.reduce(&1, 0, fn item, acc -> String.to_integer(item) + acc end))
+  |> Enum.sort_by(fn item -> item end, &>=/2)
+
+sorted |> Enum.at(0)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+67016
+```
+
+## Part 2
+
+```elixir
+sorted
+|> Enum.take(3)
+|> Enum.sum()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+200116
+```
