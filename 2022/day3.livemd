@@ -55,3 +55,27 @@ end)
 ```
 8109
 ```
+
+## Part 2
+
+```elixir
+input
+|> Kino.Input.read()
+|> String.splitter("\n", trim: true)
+|> Stream.map(&(String.codepoints(&1) |> MapSet.new()))
+|> Stream.chunk_every(3)
+|> Stream.flat_map(fn [a, b, c] ->
+  a
+  |> MapSet.intersection(b)
+  |> MapSet.intersection(c)
+end)
+|> Enum.to_list()
+|> Enum.map(&Map.get(priorities, &1))
+|> Enum.sum()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+2738
+```
