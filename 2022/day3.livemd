@@ -1,0 +1,57 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 3
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.8.0"},
+  {:nx, "~> 0.4.1"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Input
+
+```elixir
+input = Kino.Input.textarea("Please paste your inputfile:")
+```
+
+## Part 1
+
+```elixir
+priorities =
+  for n <- 1..26 do
+    [{to_string([n + 96]), n}, {to_string([n + 64]), n + 26}]
+  end
+  |> Enum.flat_map(fn item -> item end)
+  |> Enum.into(%{})
+
+split_row = fn row ->
+  row
+  |> String.codepoints()
+  |> Enum.chunk_every(trunc(String.length(row) / 2))
+  |> Enum.map(&MapSet.new(&1))
+end
+
+input
+|> Kino.Input.read()
+|> String.splitter("\n", trim: true)
+|> Stream.map(&split_row.(&1))
+|> Stream.flat_map(fn [a, b] ->
+  MapSet.intersection(a, b)
+  |> MapSet.to_list()
+end)
+|> Enum.map(&Map.get(priorities, &1))
+|> Enum.sum()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+8109
+```
