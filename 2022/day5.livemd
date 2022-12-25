@@ -1,0 +1,256 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 5
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.8.0"},
+  {:nx, "~> 0.4.1"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Input
+
+```elixir
+input = Kino.Input.textarea("Please paste your input:")
+```
+
+## Part 1
+
+```elixir
+defmodule CargoStacks do
+  def get_stack_heads(stacks) do
+    stacks
+    |> Enum.map(fn {_key, [head | _tail]} ->
+      head
+    end)
+    |> Enum.join("")
+  end
+
+  def move_crates(stacks, moves) when is_binary(moves) do
+    moves
+    |> String.splitter("\n", trim: true)
+    |> Stream.map(&String.split(&1, " ", trim: true))
+    |> Enum.reduce(stacks, &move_crate(&1, &2))
+  end
+
+  defp move_crate(move, stacks) do
+    move
+    |> parse_move()
+    |> apply_move(stacks)
+  end
+
+  defp apply_move([0, _, _], stacks), do: stacks
+
+  defp apply_move([count, from, to], stacks) do
+    {letter, stacks} = pop(stacks, from)
+    stacks = push(stacks, to, letter)
+    apply_move([count - 1, from, to], stacks)
+  end
+
+  defp parse_move(["move", crate_count, "from", source_stack, "to", target_stack]) do
+    [crate_count, source_stack, target_stack]
+    |> Enum.map(&String.to_integer(&1))
+  end
+
+  def parse_stacks(input) do
+    [stack_numbers | crates] =
+      input
+      |> String.split("\n\n")
+      |> Enum.at(0)
+      |> String.split("\n")
+      |> Enum.reverse()
+
+    create_stacks(stack_numbers)
+    |> add_crates(crates)
+  end
+
+  defp create_stacks(stack_numbers) do
+    stack_numbers
+    |> String.split(" ", trim: true)
+    |> Enum.map(fn stack_number -> {String.to_integer(stack_number), []} end)
+    |> Map.new()
+  end
+
+  defp add_crates(stacks, []), do: stacks
+
+  defp add_crates(stacks, [head | tail]) do
+    head
+    |> String.splitter("")
+    |> Stream.drop_every(4)
+    |> Stream.chunk_every(3)
+    |> Stream.map(&Enum.join(&1, ""))
+    |> Stream.with_index()
+    |> Stream.map(&parse_crate(&1))
+    |> Enum.reduce(stacks, &add_crate(&1, &2))
+    |> add_crates(tail)
+  end
+
+  defp add_crate({_stack_number, letter}, stacks) when is_nil(letter), do: stacks
+  defp add_crate({stack_number, letter}, stacks), do: push(stacks, stack_number, letter)
+
+  defp parse_crate({"[" <> <<letter::bytes-size(1)>> <> "]", index}), do: {index + 1, letter}
+  defp parse_crate({_empty, index}), do: {index + 1, nil}
+
+  defp push(stacks, stack_number, letter) do
+    {_, stacks} =
+      Map.get_and_update!(stacks, stack_number, fn previous_value ->
+        {previous_value, [letter | previous_value]}
+      end)
+
+    stacks
+  end
+
+  defp pop(stacks, stack_number) do
+    Map.get_and_update!(stacks, stack_number, fn [letter | tail] ->
+      {letter, tail}
+    end)
+  end
+end
+
+[stack_input, moves] =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n\n")
+
+stack_input
+|> CargoStacks.parse_stacks()
+|> CargoStacks.move_crates(moves)
+|> CargoStacks.get_stack_heads()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+"BZLVHBWQF"
+```
+
+## Part 2
+
+```elixir
+defmodule CrateMover do
+  def get_stack_heads(stacks) do
+    stacks
+    |> Enum.map(fn {_key, [head | _tail]} ->
+      head
+    end)
+    |> Enum.join("")
+  end
+
+  def move_crates(stacks, moves) when is_binary(moves) do
+    moves
+    |> String.splitter("\n", trim: true)
+    |> Stream.map(&String.split(&1, " ", trim: true))
+    |> Enum.reduce(stacks, &move_crate(&1, &2))
+  end
+
+  defp move_crate(move, stacks) do
+    move
+    |> parse_move()
+    |> apply_move(stacks)
+  end
+
+  defp apply_move([count, from, to], stacks) do
+    {letter, stacks} = pop(stacks, from, count)
+    push(stacks, to, letter)
+  end
+
+  defp parse_move(["move", crate_count, "from", source_stack, "to", target_stack]) do
+    [crate_count, source_stack, target_stack]
+    |> Enum.map(&String.to_integer(&1))
+  end
+
+  def parse_stacks(input) do
+    [stack_numbers | crates] =
+      input
+      |> String.split("\n\n")
+      |> Enum.at(0)
+      |> String.split("\n")
+      |> Enum.reverse()
+
+    create_stacks(stack_numbers)
+    |> add_crates(crates)
+  end
+
+  defp create_stacks(stack_numbers) do
+    stack_numbers
+    |> String.split(" ", trim: true)
+    |> Enum.map(fn stack_number -> {String.to_integer(stack_number), []} end)
+    |> Map.new()
+  end
+
+  defp add_crates(stacks, []), do: stacks
+
+  defp add_crates(stacks, [head | tail]) do
+    head
+    |> String.splitter("")
+    |> Stream.drop_every(4)
+    |> Stream.chunk_every(3)
+    |> Stream.map(&Enum.join(&1, ""))
+    |> Stream.with_index()
+    |> Stream.map(&parse_crate(&1))
+    |> Enum.reduce(stacks, &add_crate(&1, &2))
+    |> add_crates(tail)
+  end
+
+  defp add_crate({_stack_number, letter}, stacks) when is_nil(letter), do: stacks
+  defp add_crate({stack_number, letter}, stacks), do: push(stacks, stack_number, letter)
+
+  defp parse_crate({"[" <> <<letter::bytes-size(1)>> <> "]", index}), do: {index + 1, letter}
+  defp parse_crate({_empty, index}), do: {index + 1, nil}
+
+  defp push(stacks, stack_number, letter) when is_binary(letter),
+    do: push(stacks, stack_number, [letter])
+
+  defp push(stacks, stack_number, crates) when is_list(crates) do
+    {_, stacks} =
+      Map.get_and_update!(stacks, stack_number, fn previous_value ->
+        {previous_value, crates ++ previous_value}
+      end)
+
+    stacks
+  end
+
+  defp pop(stacks, stack_number, count) when count == 1 do
+    Map.get_and_update!(stacks, stack_number, fn [letter | tail] ->
+      {letter, tail}
+    end)
+  end
+
+  defp pop(stacks, stack_number, count) do
+    Map.get_and_update!(stacks, stack_number, fn stack ->
+      shift_left([], stack, count)
+    end)
+  end
+
+  defp shift_left(left, right, count) when count == 0 do
+    {Enum.reverse(left), right}
+  end
+
+  defp shift_left(left, [head | tail], count) do
+    shift_left([head | left], tail, count - 1)
+  end
+end
+
+[stack_input, moves] =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n\n")
+
+stack_input
+|> CrateMover.parse_stacks()
+|> CrateMover.move_crates(moves)
+|> CrateMover.get_stack_heads()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+"TDGJQTZSL"
+```

@@ -1,0 +1,80 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 4
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.8.0"},
+  {:nx, "~> 0.4.1"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Input
+
+```elixir
+input = Kino.Input.textarea("Please paste your input:")
+```
+
+## Part 1
+
+```elixir
+intersects = fn [{a_min, a_max}, {b_min, b_max}] ->
+  (a_min <= b_min && a_max >= b_max) || (b_min <= a_min && b_max >= a_max)
+end
+
+input
+|> Kino.Input.read()
+|> String.splitter("\n", trim: true)
+|> Stream.map(fn row ->
+  row
+  |> String.split(",")
+  |> Enum.flat_map(&String.split(&1, "-"))
+  |> Enum.map(&String.to_integer(&1))
+  |> Enum.chunk_every(2)
+  |> Enum.map(&List.to_tuple(&1))
+end)
+|> Stream.filter(&intersects.(&1))
+|> Enum.to_list()
+|> Enum.count()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+485
+```
+
+## Part 2
+
+```elixir
+overlaps = fn [{a_min, a_max}, {b_min, b_max}] ->
+  a_min <= b_max && b_min <= a_max
+end
+
+input
+|> Kino.Input.read()
+|> String.splitter("\n", trim: true)
+|> Stream.map(fn row ->
+  row
+  |> String.split(",")
+  |> Enum.flat_map(&String.split(&1, "-"))
+  |> Enum.map(&String.to_integer(&1))
+  |> Enum.chunk_every(2)
+  |> Enum.map(&List.to_tuple(&1))
+end)
+|> Stream.filter(&overlaps.(&1))
+|> Enum.to_list()
+|> Enum.count()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+857
+```
