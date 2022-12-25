@@ -1,0 +1,62 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# Day 6
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.8.0"},
+  {:nx, "~> 0.4.1"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Input
+
+```elixir
+input = Kino.Input.textarea("Please paste your input:")
+```
+
+## Part 1
+
+```elixir
+input
+|> Kino.Input.read()
+|> String.splitter("", trim: true)
+|> Stream.chunk_every(4, 1)
+|> Stream.take_while(fn stream ->
+  length(stream) != length(Enum.uniq(stream))
+end)
+|> Enum.count()
+|> Kernel.+(4)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+1965
+```
+
+## Part 2
+
+```elixir
+input
+|> Kino.Input.read()
+|> String.splitter("", trim: true)
+|> Stream.chunk_every(14, 1)
+|> Stream.take_while(fn stream ->
+  length(stream) != length(Enum.uniq(stream))
+end)
+|> Enum.count()
+|> Kernel.+(14)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+2773
+```
